@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GermanMaxxing - Dashboard Quizów</title>
+    <style>
+        /* Minimalistyczny i nowoczesny styl */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #0056b3;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .quiz-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        .quiz-card {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            width: 280px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        .quiz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        .quiz-card h3 {
+            color: #333;
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+        .btn-start-quiz {
+            background-color: #007bff; /* Niebieski akcent */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+        .btn-start-quiz:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Dashboard Quizów GermanMaxxing</h1>
+        <p>Wybierz tryb nauki, aby rozpocząć quiz. Kliknięcie przeniesie Cię do interaktywnej sesji nauki.</p>
+        
+        <div class="quiz-grid">
+            <!-- Quiz 1: Słownictwo Szkolne (Obowiązkowy) -->
+            <div class="quiz-card">
+                <h3>Słownictwo Szkolne A1</h3>
+                <p>Testuj podstawowe słownictwo związane ze szkołą i codziennym życiem.</p>
+                <button class="btn-start-quiz" onclick="startQuiz('scuola')">Rozpocznij Quiz</button>
+            </div class>
+
+            <!-- Quiz 2: Rodzajniki (AKTUALIZOWANY) -->
+            <div class="quiz-card">
+                <h3>Rodzajniki</h3>
+                <p>Sprawdź, czy pamiętasz rodzajniki (der/die/das) dla kluczowych rzeczowników.</p>
+                <button class="btn-start-quiz" onclick="startQuiz('rodzajniki')">Rozpocznij Quiz</button>
+            </div>
+
+            <!-- Quiz 3: Przedmioty (Dla przyszłości) -->
+            <div class="quiz-card">
+                <h3>Przedmioty</h3>
+                <p>Quiz poświęcony nazewnictwu przedmiotów nauki.</p>
+                <button class="btn-start-quiz" disabled style="background-color: #ccc;">Wkrótce</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funkcja obsługująca przekierowanie do lesson.html
+        function startQuiz(quizKey) {
+            // Zmieniono: zamiast lesson.html?quiz=... używamy lesson2.html dla rodzajników
+            let targetUrl = 'lesson.html';
+            if (quizKey === 'rodzajniki') {
+                targetUrl = 'lesson2.html';
+            }
+            
+            // Tworzenie URL z parametrem quiz
+            window.location.href = `${targetUrl}?quiz=${quizKey}`;
+        }
+    </script>
+</body>
+</html>

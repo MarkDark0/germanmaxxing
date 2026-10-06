@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GermanMaxxing - Quiz</title>
+    <style>
+        /* Minimalistyczny i nowoczesny styl */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #quiz-info {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #666;
+        }
+        .question-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        #polish-word {
+            font-size: 2.5em;
+            color: #d9534f; /* Czerwony akcent dla polskiego słowa */
+            display: block;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        .feedback {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            display: none; /* Ukryte domyślnie */
+        }
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s;
+        }
+        .btn-submit:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .btn-submit:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #results-summary {
+            text-align: center;
+            padding: 30px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="quiz-title">GermanMaxxing Quiz</h1>
+        <div id="quiz-info"></div>
+
+        <!-- Sekcja Quizu -->
+        <div id="quiz-area">
+            <div class="question-container">
+                <p>Pytanie <span id="question-counter">1</span> / <span id="total-questions"></span></p>
+                <span id="polish-word">Ładowanie...</span>
+                
+                <div class="input-group">
+                    <label for="german-answer">Odpowiedź po niemiecku:</label>
+                    <input type="text" id="german-answer" placeholder="Wpisz słowo niemieckie" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="gender-select">Rodzajnik:</label>
+                    <select id="gender-select" required>
+                        <option value="" disabled selected>Wybierz rodzajnik</option>
+                        <option value="der">der</option>
+                        <option value="die">die</option>
+                        <option value="das">das</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="feedback-message" class="feedback"></div>
+            
+            <button id="submit-button" class="btn-submit" onclick="checkAnswer()">Sprawdź Odpowiedź</button>
+        </div>
+
+        <!-- Sekcja Wyników (Ukryta początkowo) -->
+        <div id="results-summary" style="display: none;">
+            <h2>Quiz zakończony!</h2>
+            <p>Osiągnięty wynik: <strong id="final-score"></strong> / <span id="total-score-display"></span></p>
+            <p>Świetna robota! Kontynuuj naukę!</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. IMPORT DANYCH ---
+        // W prawdziwym projekcie, data.js byłby importowany. Tutaj symulujemy to wklejając dane.
+        const vocabularyData = [
+            { polish: "szkoła", german: "die Schule", gender: "die" },
+            { polish: "uczeń", german: "der Schüler", gender: "der" },
+            { polish: "uczennica", german: "die Schülerin", gender: "die" },
+            { polish: "nauczyciel", german: "der Lehrer", gender: "der" },
+            { polish: "nauczycielka", german: "die Lehrerin", gender: "die" },
+            { polish: "lekcja", german: "die Stunde", gender: "die" },
+            { polish: "książka", german: "das Buch", gender: "das" },
+            { polish: "ołówek", german: "der Stift", gender: "der" },
+            { polish: "tablica", german: "die Tafel", gender: "die" },
+            { polish: "zadanie", german: "die Aufgabe", gender: "die" },
+            { polish: "matematyka", german: "die Mathematik", gender: "die" },
+            { polish: "historia", german: "die Geschichte", gender: "die" },
+            { polish: "język niemiecki", german: "die deutsche Sprache", gender: "die" },
+            { polish: "biologia", german: "die Biologie", gender: "die" },
+            { polish: "geografia", german: "die Geographie", gender: "die" },
+            { polish: "fizyka", german: "die Physik", gender: "die" },
+            { polish: "klasa", german: "der Klassenraum", gender: "der" },
+            { polish: "biblioteka", german: "die Bibliothek", gender: "die" },
+            { polish: "laboratorium", german: "das Labor", gender: "das" },
+            { polish: "dyrekcja", german: "die Direktion", gender: "die" }
+        ];
+
+        const quizzes = {
+            "scuola": {
+                title: "Słownictwo Szkolne A1",
+                data: vocabularyData.slice(0, 10)
+            },
+            "rodzajniki": {
+                title: "Rodzajniki (Przykłady)",
+                data: vocabularyData.slice(10, 15)
+            },
+            "przedmioty": {
+                title: "Przedmioty",
+                data: vocabularyData.slice(15, 20)
+            }
+        };
+
+        // --- 2. STAN APLIKACJI ---
+        let currentQuizData = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // --- 3. ELEMENTY DOMU ---
+        const polishWordEl = document.getElementById('polish-word');
+        const questionCounterEl = document.getElementById('question-counter');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const genderSelectEl = document.getElementById('gender-select');
+        const germanAnswerInput = document.getElementById('german-answer');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const submitButton = document.getElementById('submit-button');
+        const quizArea = document.getElementById('quiz-area');
+        const resultsSummary = document.getElementById('results-summary');
+        const quizTitleEl = document.getElementById('quiz-title');
+        const quizInfoEl = document.getElementById('quiz-info');
+
+        // --- 4. FUNKCJE LOGIKI ---
+
+        /**
+         * Inicjalizuje quiz na podstawie parametru URL.
+         */
+        function initializeQuiz() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const quizKey = urlParams.get('quiz');
+
+            if (!quizKey || !quizzes[quizKey]) {
+                alert("Błąd: Nie podano poprawnego quizu. Proszę wrócić na stronę główną.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Ustawienie danych quizu
+            currentQuizData = quizzes[quizKey].data;
+            
+            // Aktualizacja UI
+            quizTitleEl.textContent = `GermanMaxxing - ${quizzes[quizKey].title}`;
+            quizInfoEl.innerHTML = `<p>Testujesz ${currentQuizData.length} słów. Skup się na poprawnym wpisaniu słowa i wybraniu rodzaju!</p>`;
+            
+            // Reset stanu
+            score = 0;
+            currentQuestionIndex = 0;
+
+            // Ukrycie/pokazanie sekcji
+            resultsSummary.style.display = 'none';
+            quizArea.style.display = 'block';
+            
+            // Ustawienie liczników
+            totalQuestionsEl.textContent = currentQuizData.length;
+            
+            // Uruchomienie pierwszego pytania
+            loadQuestion();
+        }
+
+        /**
+         * Ładuje i wyświetla pytanie na podstawie bieżącego indeksu.
+         */
+        function loadQuestion() {
+            if (currentQuestionIndex >= currentQuizData.length) {
+                showResults();
+                return;
+            }
+
+            const question = currentQuizData[currentQuestionIndex];
+            
+            // Resetowanie pól
+            polishWordEl.textContent = question.polish;
+            questionCounterEl.textContent = currentQuestionIndex + 1;
+            
+            germanAnswerInput.value = '';
+            genderSelectEl.value = '';
+            feedbackMessageEl.style.display = 'none';
+            feedbackMessageEl.className = 'feedback';
+            submitButton.disabled = false;
+            submitButton.textContent = 'Sprawdź Odpowiedź';
+
+            // Ustawienie opcji dla dropdowna (dla czystości, choć nie jest to konieczne, bo jest ustawione na start)
+            genderSelectEl.innerHTML = `
+                <option value="" disabled selected>Wybierz rodzajnik</option>
+                <option value="der">der</option>
+                <option value="die">die</option>
+                <option value="das">das</option>
+            `;
+        }
+
+        /**
+         * Waliduje odpowiedź użytkownika i aktualizuje wynik.
+         */
+        function checkAnswer() {
+            if (currentQuestionIndex >= currentQuizData.length) return;
+
+            const question = currentQuizData[currentQuestionIndex];
+            const userAnswer = germanAnswerInput.value.trim().toLowerCase();
+            const userGender = genderSelectEl.value;
+
+            // Walidacja podstawowa
+            if (!userAnswer || !userGender) {
+                displayFeedback("Proszę wypełnić oba pola: słowo i rodzajnik.", 'incorrect');
+                return;
+            }
+
+            // Walidacja logiczna
+            const isCorrect = (
+                userAnswer === question.german.toLowerCase() && 
+                userGender === question.gender
+            );
+
+            if (isCorrect) {
+                score++;
+                displayFeedback("✅ Poprawnie! Świetna robota!", 'correct');
+            } else {
+                displayFeedback(`❌ Niepoprawnie. Prawidłowa odpowiedź to: ${question.german} (${question.gender}).`, 'incorrect');
+            }
+
+            // Dezaktywacja przycisku i przygotowanie do przejścia dalej
+            submitButton.disabled = true;
+            submitButton.textContent = 'Przejdź do następnego pytania';
+            
+            // Ustawienie przycisku na przejście do następnego pytania po krótkiej pauzie
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 1500);
+        }
+
+        /**
+         * Wyświetla komunikat feedbacku.
+         * @param {string} message - Treść komunikatu.
+         * @param {('correct'|'incorrect')} type - Typ komunikatu.
+         */
+        function displayFeedback(message, type) {
+            feedbackMessageEl.textContent = message;
+            feedbackMessageEl.className = `feedback ${type}`;
+            feedbackMessageEl.style.display = 'block';
+        }
+
+        /**
+         * Wyświetla podsumowanie wyników po zakończeniu quizu.
+         */
+        function showResults() {
+            quizArea.style.display = 'none';
+            resultsSummary.style.display = 'block';
+            
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('total-score-display').textContent = currentQuizData.length;
+        }
+
+        // --- 5. INICJALIZACJA ---
+        window.onload = initializeQuiz;
+    </script>
+</body>
+</html>

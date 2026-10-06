@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GermanMaxxing - Quiz Rodzajniki (Dynamiczny)</title>
+    <style>
+        /* ---------------- CSS - STYLE (Zachowane) ---------------- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px 60px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 {
+            color: #0056b3; 
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        p {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .btn-start, .btn-next, .btn-submit {
+            background-color: #28a745; 
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            display: inline-block;
+            margin-top: 10px;
+            transform: none; 
+        }
+        .btn-start:hover, .btn-next:hover, .btn-submit:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        /* STYLE DLA QUIZU */
+        #quiz-container {
+            display: none; 
+            margin-top: 30px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+        .question-text {
+            font-size: 1.6em;
+            margin-bottom: 25px;
+            color: #0056b3;
+            text-align: left;
+        }
+        .options {
+            display: flex;
+            flex-direction: column; 
+            gap: 10px;
+        }
+        .options button {
+            margin: 0;
+            padding: 12px 25px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            text-align: left;
+        }
+        .options button:hover:not(:disabled) {
+            background-color: #e6f7ff;
+            border-color: #0056b3;
+        }
+        .options button:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-height: 30px; 
+        }
+        .correct {
+            color: #28a745;
+        }
+        .incorrect {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body onload="window.onload = function(){ /* Upewnia się, że skrypty są gotowe */ }">
+    <div class="container">
+        <h1>🇩🇪 GermanMaxxing - Quiz Rodzajniki 🇩🇪</h1>
+        <p>Testuj swoją wiedzę o rodzajnikach (der/die/das), używając dynamicznego słownictwa z data.js!</p>
+        
+        <!-- Sekcja startowa -->
+        <div id="start-screen">
+            <button id="start-button" class="btn-start">Rozpocznij Dynamiczny Quiz Rodzajników</button>
+        </div >
+
+        <!-- Sekcja quizu (Początkowo ukryta) -->
+        <div id="quiz-container">
+            <h2 class="question-text" id="question-prompt"></h2>
+            <div class="options" id="options-container"></div>
+            <div class="feedback" id="feedback"></div>
+            <button class="btn-next" id="next-button" style="display:none;">Pytanie Dalej</button>
+        </div>
+    </div>
+
+    <!-- 🔑 KROK 1: ŁADOWANIE DANYCH Z ZEWNĘTRZNEGO PLIKU DATA.JS -->
+    <script src="data.js"></script>
+
+    <!-- ---------------- JAVASCRIPT - LOGIKA ---------------- -->
+    <script>
+        // ==================================================
+        // 🗂️ PULT STEROWANIA: TUTAJ ZMIENIASZ LICZBĘ PYTAŃ!
+        // ==================================================
+        // Ustaw tę wartość na pożądaną liczbę pytań (maksymalnie 20, ponieważ jest tak dużo słów)
+        const MAX_QUESTIONS = 10; 
+
+        // ==================================================
+        // UTILITY & LOGIKA
+        // ==================================================
+
+        // UTILITY: Funkcja szufladowa (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // GŁÓWNA FUNKCJA: Generowanie quizu na podstawie wybranego podzbioru danych
+        function generateDynamicQuiz(data) {
+            const quiz = [];
+            const articles = ["der", "die", "das"];
+
+            if (!data || data.length === 0) {
+                 console.error("vocabularyData nie została załadowana lub jest pusta.");
+                 return [];
+            }
+
+            data.forEach(word => {
+                let questionText = `Jaki jest rodzajnik dla słowa: "${word.german}"? (Tłumaczenie: ${word.polish})`;
+                let correctAnswer = word.gender;
+                
+                // Losujemy 3 unikalne opcje: poprawna + 2 błędne
+                let wrongOptions = articles.filter(a => a !== correctAnswer);
+                // Upewniamy się, że mamy zawsze 3 unikalne opcje
+                let options = [...new Set([correctAnswer, wrongOptions[0], wrongOptions[1]])]; 
+
+                quiz.push({
+                    question: questionText,
+                    options: options,
+                    correctAnswer: correctAnswer,
+                    explanation: `Prawidłowy rodzajnik to ${word.gender}. Słowo "${word.german}" należy do tej kategorii.`
+                });
+            });
+            return quiz;
+        }
+
+
+        // 3. Referencje do elementów DOM
+        const startScreen = document.getElementById('start-screen');
+        const quizContainer = document.getElementById('quiz-container');
+        const startButton = document.getElementById('start-button');
+        const questionPrompt = document.getElementById('question-prompt');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackElement = document.getElementById('feedback');
+        const nextButton = document.getElementById('next-button');
+
+        let quizData = []; 
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // 4. Funkcja ładowania pytania (BEZ ZMIAN)
+        function loadQuestion() {
+            feedbackElement.innerHTML = '';
+            optionsContainer.innerHTML = '';
+            nextButton.style.display = 'none';
+            
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionPrompt.textContent = `Pytanie ${currentQuestionIndex + 1}/${quizData.length}: ${currentQuestion.question}`;
+            
+            let shuffledOptions = shuffleArray([...currentQuestion.options]);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-button');
+                button.onclick = () => checkAnswer(option, currentQuestion.explanation);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // 5. Funkcja sprawdzania odpowiedzi (BEZ ZMIAN)
+        function checkAnswer(selectedOption, explanation) {
+            const currentQuestion = quizData[currentQuestionIndex];
+            
+            Array.from(optionsContainer.querySelectorAll('button')).forEach(btn => {
+                btn.disabled = true;
+            });
+
+            const isCorrect = selectedOption === currentQuestion.correctAnswer;
+            
+            if (isCorrect) {
+                score++;
+                feedbackElement.innerHTML = `<span class="correct">✅ POPRAWNIE!</span> ${explanation}`;
+            } else {
+                feedbackElement.innerHTML = `<span class="incorrect">❌ NIEPOPRAWNIE.</span> Prawidłowy rodzajnik to <strong class="correct">${currentQuestion.correctAnswer}</strong>. ${explanation}`;
+            }
+            
+            nextButton.style.display = 'inline-block';
+        }
+
+        // 6. Funkcja przechodzenia do następnego pytania (BEZ ZMIAN)
+        function handleNextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // 7. Funkcja wyświetlania wyników (BEZ ZMIAN)
+        function showResults() {
+            const totalQuestions = quizData.length;
+            const containerHTML = `
+                <h2 style="color: #0056b3;">Quiz zakończony! 🎉</h2>
+                <p>Gratuluję! Odpowiedziałeś/aś poprawnie na ${score} z ${totalQuestions} pytań.</p>
+                <p style="font-size: 1.2em; color: #333;">Jesteś mistrzem rodzajników? Sprawdź, czy powtórzyć wiedzę lub zacząć nowy zestaw!</p>
+                <button class="btn-start" onclick="window.location.reload()">Spróbuj ponownie</button>
+            `;
+            quizContainer.innerHTML = containerHTML;
+            document.getElementById('next-button').style.display = 'none';
+        }
+
+
+        // 8. Obsługa zdarzeń (Event Listeners)
+        
+        startButton.addEventListener('click', () => {
+            // ➡️ KROK 1: Losowanie podzbioru słownictwa
+            const vocabularyCopy = [...vocabularyData];
+            let randomVocabularySubset = shuffleArray(vocabularyCopy);
+            
+            // Przycinamy listę do maksymalnej liczby pytań
+            const selectedVocabulary = randomVocabularySubset.slice(0, MAX_QUESTIONS);
+
+            // ➡️ KROK 2: Generowanie quizu na podstawie wybranego podzbioru
+            let generatedQuiz = generateDynamicQuiz(selectedVocabulary);
+
+            // ➡️ KROK 3: Losowanie kolejności pytań (jest to zbędne, ale bezpieczne)
+            quizData = shuffleArray(generatedQuiz);
+
+            // Ustawienie interfejsu
+            startScreen.style.display = 'none';
+            quizContainer.style.display = 'block';
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            loadQuestion();
+        });
+
+        nextButton.addEventListener('click', handleNextQuestion);
+    </script>
+</body>
+</html>
